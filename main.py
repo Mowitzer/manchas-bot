@@ -13,7 +13,7 @@ from google.appengine.api import urlfetch
 from google.appengine.ext import ndb
 import webapp2
 
-TOKEN = '369806398:AAG6suzqg7yKEKJVo98zPeDJ8y6D3h5Bhc0'
+TOKEN = '[redacted]'
 BASE_URL = 'https://api.telegram.org/bot' + TOKEN + '/'
 
 
@@ -142,9 +142,13 @@ class WebhookHandler(webapp2.RequestHandler):
                 setEnabled(2, False)
 
             elif 'mow' in text.lower():
+                reply('*WOM!*')
+                setEnabled(2, False)
+
+            elif 'graph' in text.lower():
                 img = Image.new('RGB', (512, 512))
                 base = random.randint(0, 16777216)
-                pixels = [base+(i-128)+(j-128) for i in range(512) for j in range(512)]
+                pixels = [(0, 5255)[abs((i-256)**2 + (j-256)**2 - 220**2) < 500] for i in range(512) for j in range(512)]
                 img.putdata(pixels)
                 output = StringIO.StringIO()
                 img.save(output, 'JPEG')
