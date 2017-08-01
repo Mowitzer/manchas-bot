@@ -20,19 +20,36 @@ BASE_URL = 'https://api.telegram.org/bot' + TOKEN + '/'
 # ================================
 
 class BotStatus(ndb.Model):
-    value = ndb.BooleanProperty(indexed=False, default=False)
+    muzz = ndb.BooleanProperty(indexed=False, default=False)
+    annoy = ndb.IntegerProperty(indexed=False, default=0)
+
+#class BotStatus(ndb.Model):
+    #friendly = ndb.IntegerProperty(indexed=False, default=0)
+    #last_word = ndb.TextProperty(indexed=False)
 
 # ================================
 
-def setEnabled(key, args):
-    bs = BotStatus.get_or_insert(str(key))
-    bs.value = args
+def setMuzz(chat_id, args):
+    bs = BotStatus.get_or_insert(str(chat_id))
+    bs.muzz = args
     bs.put()
 
-def getEnabled(key):
-    bs = BotStatus.get_by_id(str(key))
+def getMuzz(chat_id):
+    bs = BotStatus.get_by_id(str(chat_id))
     if bs:
-        return bs.value
+        return bs.muzz
+    return False
+
+
+def setAnnoy(chat_id, args):
+    bs = BotStatus.get_or_insert(str(chat_id))
+    bs.annoy = args
+    bs.put()
+
+def getAnnoy(chat_id):
+    bs = BotStatus.get_by_id(str(chat_id))
+    if bs:
+        return bs.annoy
     return False
 
 
@@ -81,7 +98,7 @@ class WebhookHandler(webapp2.RequestHandler):
             message_id = message.get('message_id')
             date = message.get('date')
             text = message.get('text')
-            fr = message.get('from').get('id')
+            fr = message['from']['first_name']
             chat = message['chat']
             chat_id = chat['id']
 
@@ -107,56 +124,56 @@ class WebhookHandler(webapp2.RequestHandler):
             if text.startswith('/'):
                 if text.startswith('/start'):
                     reply('Manchas, at your service!')
-                elif text.startswith('/muzzle'):
+
+                elif text == '/muzzle':
                     reply('Manchas has been muzzled')
-                    setEnabled(1, True)
-                elif text.startswith('/pet'):
-                    reply('```uwu ^_^\n```')
-                    setEnabled(2, False)
+                    setMuzz(chat_id, True)
+
                 elif text.startswith('/unmuzzle'):
                     reply('Manchas has been unmuzzled')
-                    setEnabled(1, False)
+                    setMuzz(chat_id, False)
+
+                elif text.startswith('/pet'):
+                    reply('Thanks, {}!'.format(str(fr)))
+                elif text.startswith('/botstatus'):
+                    reply('*Bot Status*\nAnnoy: `{}`'.format(str(getAnnoy(chat_id))))
 
             # MESSAGE HANDLER
 
             elif 'mew' in text.lower():
-                if getEnabled(2):
-                    reply('STOP MAKING ME MEW!')
+                if getMuzz(chat_id):
+                    reply('MMMPH MMMMMPHHM HHMMMMM!!!!!!!!')
                 else:
-                    if getEnabled(1):
-                        reply('MMMPH MMMMMPHHM HHMMMMM!!!!!!!!')
+                    tempBuffer = getAnnoy(chat_id)
+                    if tempBuffer > 4:
+                        reply('THAT\'S ENOUGH MEWING' + ('!' * (tempBuffer - 4)))
                     else:
                         reply('MEEEWWWWWWWW!!!!!!!!')
-                setEnabled(2, True)
+                    setAnnoy(chat_id, getAnnoy(chat_id) + 1)
                 
             elif 'chuff' in text.lower():
                 reply('chuffs')
-                setEnabled(2, False)
 
             elif 'blep' in text.lower():
-                reply('mlem')
-                setEnabled(2, False)
+                setAnnoy(chat_id, getAnnoy(chat_id) - 1)
+                reply('mlem ' + str(getAnnoy(chat_id)))
 
             elif 'mlem' in text.lower():
-                reply('blep')
-                setEnabled(2, False)
+                setAnnoy(chat_id, getAnnoy(chat_id) - 1)
+                reply('blep ' + str(getAnnoy(chat_id)))
 
             elif 'mow' in text.lower():
+                setAnnoy(chat_id, 1)
                 reply('*WOM!*')
-                setEnabled(2, False)
 
-            elif 'graph' in text.lower():
+            elif 'parabola' in text.lower():
                 img = Image.new('RGB', (512, 512))
                 base = random.randint(0, 16777216)
-                pixels = [(0, 5255)[abs((i-256)**2 + (j-256)**2 - 220**2) < 500] for i in range(512) for j in range(512)]
+                pixels = [(0, 255)[abs((j-256)**2 - (i-128)) < 30] for i in range(512) for j in range(512)]
                 img.putdata(pixels)
                 output = StringIO.StringIO()
                 img.save(output, 'JPEG')
                 reply(img=output.getvalue())
-                setEnabled(2, False)
-
-            elif text == 'manchasgetfrom':
-                reply("User ID: `{}`".format(str(fr)))
 
         except:
             self.response.set_status(200)
