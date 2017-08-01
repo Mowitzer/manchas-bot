@@ -13,7 +13,8 @@ from google.appengine.api import urlfetch
 from google.appengine.ext import ndb
 import webapp2
 
-TOKEN = '[redacted]'
+# Secret Telegram Bot Token
+from api_token import TOKEN
 BASE_URL = 'https://api.telegram.org/bot' + TOKEN + '/'
 
 
@@ -23,9 +24,9 @@ class BotStatus(ndb.Model):
     muzz = ndb.BooleanProperty(indexed=False, default=False)
     annoy = ndb.IntegerProperty(indexed=False, default=0)
 
-#class BotStatus(ndb.Model):
-    #friendly = ndb.IntegerProperty(indexed=False, default=0)
-    #last_word = ndb.TextProperty(indexed=False)
+class UserStatus(ndb.Model):
+    friendly = ndb.IntegerProperty(indexed=False, default=0)
+    last_word = ndb.TextProperty(indexed=False)
 
 # ================================
 
